@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Instagram Video Downloader</title>
+    <title>Instagram Reels Downloader</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -65,8 +65,8 @@
 </head>
 <body>
     <div class="container">
-        <h1>Instagram Video Downloader</h1>
-        <input type="text" id="videoUrl" placeholder="Enter Instagram Video URL">
+        <h1>Instagram Reels Downloader</h1>
+        <input type="text" id="videoUrl" placeholder="Enter Instagram Reels URL" value="https://www.instagram.com/reel/DHowNJLJvwv/?igsh=MXhyZHMyaWNxa3NoaQ==">
         <button onclick="startDownload()">Start Download</button>
         <div id="status">Status: Waiting for input...</div>
         <div id="downloadLink">
@@ -82,14 +82,13 @@
             const videoLink = document.getElementById('videoLink');
 
             if (!videoUrl) {
-                status.textContent = 'Error: Please enter a valid Instagram video URL.';
+                status.textContent = 'Error: Please enter a valid Instagram Reels URL.';
                 downloadLink.style.display = 'none';
                 return;
             }
 
-            // Validate URL (basic check for Instagram URL structure)
-            if (!videoUrl.includes('instagram.com')) {
-                status.textContent = 'Error: Please enter a valid Instagram URL.';
+            if (!videoUrl.includes('instagram.com/reel')) {
+                status.textContent = 'Error: Please enter a valid Instagram Reels URL (must include "instagram.com/reel").';
                 downloadLink.style.display = 'none';
                 return;
             }
@@ -98,20 +97,27 @@
             downloadLink.style.display = 'none';
 
             try {
-                // Replace with a real Instagram video downloader API or proxy
-                // This is a placeholder URL for demonstration; you'll need a working API
-                const apiUrl = `https://api.example.com/instagram?url=${encodeURIComponent(videoUrl)}`;
+                // Using a CORS proxy to bypass restrictions (replace with a real API or your own backend)
+                const corsProxy = 'https://cors-anywhere.herokuapp.com/';
+                const apiUrl = `https://snapinsta.app/action.php`; // SnapInsta API endpoint (example)
 
-                const response = await fetch(apiUrl);
+                const response = await fetch(corsProxy + apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `url=${encodeURIComponent(videoUrl)}`
+                });
+
                 if (!response.ok) {
-                    throw new Error('Failed to fetch video details.');
+                    throw new Error(`Failed to fetch video details: ${response.statusText}`);
                 }
 
                 const data = await response.json();
-                if (data && data.videoUrl) {
+                if (data && data.downloadUrl) {
                     status.textContent = 'Status: Video ready for download!';
-                    videoLink.href = data.videoUrl;
-                    videoLink.download = 'instagram_video.mp4'; // Suggest a filename
+                    videoLink.href = data.downloadUrl;
+                    videoLink.download = 'instagram_reel.mp4';
                     downloadLink.style.display = 'block';
                 } else {
                     throw new Error('No video found in the provided URL.');
