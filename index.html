@@ -42,6 +42,7 @@
   }
   #status {
     margin-top: 15px;
+    font-weight: bold;
   }
   #fileList {
     margin-top: 20px;
@@ -73,6 +74,8 @@
     const input = document.getElementById('magnetInput').value.trim();
     const statusDiv = document.getElementById('status');
     const fileListDiv = document.getElementById('fileList');
+
+    // Clear previous files
     fileListDiv.innerHTML = '';
 
     if (!input) {
@@ -80,34 +83,35 @@
       return;
     }
 
+    // Show "Adding torrent..." immediately
+    statusDiv.textContent = 'Adding torrent...';
+
+    // Prepare magnet URI
     let magnetURI = input;
-    // If user entered just an info hash, create magnet link
     if (!input.startsWith('magnet:')) {
       magnetURI = 'magnet:?xt=urn:btih:' + input;
     }
 
-    statusDiv.innerHTML = 'Adding torrent...';
-
     // Add torrent
     client.add(magnetURI, function(torrent) {
+      // Update status to downloading
       statusDiv.innerHTML = 'Downloading: ' + torrent.name;
 
       // List files
-      torrent.files.forEach(function(file, index) {
-        // Create a download link for each file
+      torrent.files.forEach(function(file) {
         file.getBlobURL(function(err, url) {
           if (err) {
-            console.error('Error getting blob URL:', err);
+            console.error('Error creating blob URL:', err);
             return;
           }
           const div = document.createElement('div');
           div.className = 'file-item';
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = file.name;
-          link.textContent = 'Download ' + file.name;
-          div.appendChild(link);
-          document.getElementById('fileList').appendChild(div);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = file.name;
+          a.textContent = 'Download ' + file.name;
+          div.appendChild(a);
+          fileListDiv.appendChild(div);
         });
       });
 
@@ -125,6 +129,7 @@
     // Handle errors
     client.on('error', (err) => {
       alert('Error: ' + err.message);
+      statusDiv.innerHTML = 'Error occurred during torrent processing.';
     });
   }
 </script>
