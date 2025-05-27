@@ -1,0 +1,133 @@
+
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>WebTorrent Browser Downloader</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #f4f4f4;
+    margin: 0;
+    padding: 20px;
+  }
+  h1 {
+    text-align: center;
+  }
+  .container {
+    max-width: 900px;
+    margin: 40px auto;
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  }
+  input[type="text"], textarea {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    box-sizing: border-box;
+  }
+  button {
+    margin-top: 15px;
+    padding: 12px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  button:hover {
+    background-color: #0056b3;
+  }
+  #status {
+    margin-top: 15px;
+  }
+  #fileList {
+    margin-top: 20px;
+  }
+  .file-item {
+    margin-bottom: 10px;
+  }
+</style>
+</head>
+<body>
+
+<h1>WebTorrent Browser Downloader</h1>
+
+<div class="container">
+  <h2>Enter Magnet Link or Info Hash</h2>
+  <input type="text" id="magnetInput" placeholder="Paste magnet link or info hash" />
+  <button onclick="startTorrent()">Start Download</button>
+  
+  <div id="status"></div>
+  <div id="fileList"></div>
+</div>
+
+<!-- Load WebTorrent.js from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/webtorrent/webtorrent.min.js"></script>
+<script>
+  const client = new WebTorrent();
+
+  function startTorrent() {
+    const input = document.getElementById('magnetInput').value.trim();
+    const statusDiv = document.getElementById('status');
+    const fileListDiv = document.getElementById('fileList');
+    fileListDiv.innerHTML = '';
+
+    if (!input) {
+      alert('Please enter a magnet link or info hash.');
+      return;
+    }
+
+    let magnetURI = input;
+    // If user entered just an info hash, create magnet link
+    if (!input.startsWith('magnet:')) {
+      magnetURI = 'magnet:?xt=urn:btih:' + input;
+    }
+
+    statusDiv.innerHTML = 'Adding torrent...';
+
+    // Add torrent
+    client.add(magnetURI, function(torrent) {
+      statusDiv.innerHTML = 'Downloading: ' + torrent.name;
+
+      // List files
+      torrent.files.forEach(function(file, index) {
+        // Create a download link for each file
+        file.getBlobURL(function(err, url) {
+          if (err) {
+            console.error('Error getting blob URL:', err);
+            return;
+          }
+          const div = document.createElement('div');
+          div.className = 'file-item';
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = file.name;
+          link.textContent = 'Download ' + file.name;
+          div.appendChild(link);
+          document.getElementById('fileList').appendChild(div);
+        });
+      });
+
+      // Track progress
+      torrent.on('download', () => {
+        const progress = (torrent.progress * 100).toFixed(2);
+        statusDiv.innerHTML = 'Downloading... ' + progress + '% complete';
+      });
+
+      torrent.on('done', () => {
+        statusDiv.innerHTML = 'Download complete!';
+      });
+    });
+
+    // Handle errors
+    client.on('error', (err) => {
+      alert('Error: ' + err.message);
+    });
+  }
+</script>
+
+</body>
+</html>
