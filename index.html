@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Instagram Reels Downloader</title>
+    <title>Instagram Video Downloader</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -65,8 +65,8 @@
 </head>
 <body>
     <div class="container">
-        <h1>Instagram Reels Downloader</h1>
-        <input type="text" id="videoUrl" placeholder="Enter Instagram Reels URL" value="https://www.instagram.com/reel/DHowNJLJvwv/?igsh=MXhyZHMyaWNxa3NoaQ==">
+        <h1>Instagram Video Downloader</h1>
+        <input type="text" id="videoUrl" placeholder="Enter Instagram Video URL" value="https://www.instagram.com/reel/DHowNJLJvwv/?igsh=MXhyZHMyaWNxa3NoaQ==">
         <button onclick="startDownload()">Start Download</button>
         <div id="status">Status: Waiting for input...</div>
         <div id="downloadLink">
@@ -82,13 +82,13 @@
             const videoLink = document.getElementById('videoLink');
 
             if (!videoUrl) {
-                status.textContent = 'Error: Please enter a valid Instagram Reels URL.';
+                status.textContent = 'Error: Please enter a valid Instagram video URL.';
                 downloadLink.style.display = 'none';
                 return;
             }
 
-            if (!videoUrl.includes('instagram.com/reel')) {
-                status.textContent = 'Error: Please enter a valid Instagram Reels URL (must include "instagram.com/reel").';
+            if (!videoUrl.includes('instagram.com')) {
+                status.textContent = 'Error: Please enter a valid Instagram URL (must include "instagram.com").';
                 downloadLink.style.display = 'none';
                 return;
             }
@@ -97,34 +97,43 @@
             downloadLink.style.display = 'none';
 
             try {
-                // Using a CORS proxy to bypass restrictions (replace with a real API or your own backend)
-                const corsProxy = 'https://cors-anywhere.herokuapp.com/';
-                const apiUrl = `https://snapinsta.app/action.php`; // SnapInsta API endpoint (example)
+                // Use a public Instagram downloader service (e.g., SnapInsta)
+                const apiUrl = `https://snapinsta.app/action.php`;
+                const formData = new FormData();
+                formData.append('url', videoUrl);
 
-                const response = await fetch(corsProxy + apiUrl, {
+                const response = await fetch(apiUrl, {
                     method: 'POST',
+                    body: formData,
                     headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: `url=${encodeURIComponent(videoUrl)}`
+                        'Accept': 'application/json',
+                        'Origin': 'https://snapinsta.app',
+                        'Referer': 'https://snapinsta.app/'
+                    }
                 });
 
                 if (!response.ok) {
-                    throw new Error(`Failed to fetch video details: ${response.statusText}`);
+                    throw new Error(`Failed to fetch video details: ${response.status} ${response.statusText}`);
                 }
 
-                const data = await response.json();
-                if (data && data.downloadUrl) {
+                const data = await response.text(); // SnapInsta often returns HTML, not JSON
+                // Parse HTML to extract video URL (simplified; real implementation may vary)
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(data, 'text/html');
+                const videoElement = doc.querySelector('a[href*="cdninstagram.com"], a[href*="fbcdn.net"]');
+
+                if (videoElement && videoElement.href) {
                     status.textContent = 'Status: Video ready for download!';
-                    videoLink.href = data.downloadUrl;
-                    videoLink.download = 'instagram_reel.mp4';
+                    videoLink.href = videoElement.href;
+                    videoLink.download = 'instagram_video.mp4';
                     downloadLink.style.display = 'block';
                 } else {
-                    throw new Error('No video found in the provided URL.');
+                    throw new Error('No video URL found in the response.');
                 }
             } catch (error) {
                 status.textContent = `Error: ${error.message}`;
                 downloadLink.style.display = 'none';
+                console.error('Fetch error:', error);
             }
         }
     </script>
