@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebTorrent Browser Downloader</title>
+    <title>Instagram Video Downloader</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -35,7 +35,7 @@
         }
         button {
             padding: 10px 20px;
-            background-color: #28a745;
+            background-color: #e1306c;
             color: #fff;
             border: none;
             border-radius: 4px;
@@ -43,75 +43,83 @@
             font-size: 16px;
         }
         button:hover {
-            background-color: #218838;
+            background-color: #c13584;
         }
         #status {
             margin-top: 20px;
             color: #333;
         }
+        #downloadLink {
+            margin-top: 10px;
+            display: none;
+        }
+        #downloadLink a {
+            color: #e1306c;
+            text-decoration: none;
+            font-size: 16px;
+        }
+        #downloadLink a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>WebTorrent Browser Downloader</h1>
-        <input type="text" id="magnetLink" placeholder="Enter Magnet Link or Hash">
+        <h1>Instagram Video Downloader</h1>
+        <input type="text" id="videoUrl" placeholder="Enter Instagram Video URL">
         <button onclick="startDownload()">Start Download</button>
         <div id="status">Status: Waiting for input...</div>
+        <div id="downloadLink">
+            <a id="videoLink" href="#" download>Download Video</a>
+        </div>
     </div>
 
-    <!-- Include WebTorrent library from CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/webtorrent@latest/webtorrent.min.js"></script>
     <script>
-        const client = new WebTorrent();
-
-        function startDownload() {
-            const magnetLink = document.getElementById('magnetLink').value;
+        async function startDownload() {
+            const videoUrl = document.getElementById('videoUrl').value;
             const status = document.getElementById('status');
+            const downloadLink = document.getElementById('downloadLink');
+            const videoLink = document.getElementById('videoLink');
 
-            if (!magnetLink) {
-                status.textContent = 'Error: Please enter a valid magnet link or hash.';
+            if (!videoUrl) {
+                status.textContent = 'Error: Please enter a valid Instagram video URL.';
+                downloadLink.style.display = 'none';
                 return;
             }
 
-            status.textContent = 'Status: Initializing download...';
+            // Validate URL (basic check for Instagram URL structure)
+            if (!videoUrl.includes('instagram.com')) {
+                status.textContent = 'Error: Please enter a valid Instagram URL.';
+                downloadLink.style.display = 'none';
+                return;
+            }
 
-            client.add(magnetLink, torrent => {
-                status.textContent = `Status: Downloading ${torrent.name}...`;
+            status.textContent = 'Status: Fetching video...';
+            downloadLink.style.display = 'none';
 
-                // Log progress
-                torrent.on('download', bytes => {
-                    status.textContent = `Status: Downloading ${torrent.name} - ${Math.round(torrent.progress * 100)}%`;
-                });
+            try {
+                // Replace with a real Instagram video downloader API or proxy
+                // This is a placeholder URL for demonstration; you'll need a working API
+                const apiUrl = `https://api.example.com/instagram?url=${encodeURIComponent(videoUrl)}`;
 
-                // When download is complete
-                torrent.on('done', () => {
-                    status.textContent = `Status: Download complete for ${torrent.name}!`;
+                const response = await fetch(apiUrl);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch video details.');
+                }
 
-                    // Render files to the page
-                    torrent.files.forEach(file => {
-                        file.getBlobURL((err, url) => {
-                            if (err) {
-                                status.textContent = `Error: ${err.message}`;
-                                return;
-                            }
-                            const a = document.createElement('a');
-                            a.href = url;
-                            a.download = file.name;
-                            a.textContent = `Download ${file.name}`;
-                            a.style.display = 'block';
-                            a.style.marginTop = '10px';
-                            document.body.appendChild(a);
-                        });
-                    });
-                });
-
-                // Handle errors
-                torrent.on('error', err => {
-                    status.textContent = `Error: ${err.message}`;
-                });
-            }, err => {
-                status.textContent = `Error: ${err.message}`;
-            });
+                const data = await response.json();
+                if (data && data.videoUrl) {
+                    status.textContent = 'Status: Video ready for download!';
+                    videoLink.href = data.videoUrl;
+                    videoLink.download = 'instagram_video.mp4'; // Suggest a filename
+                    downloadLink.style.display = 'block';
+                } else {
+                    throw new Error('No video found in the provided URL.');
+                }
+            } catch (error) {
+                status.textContent = `Error: ${error.message}`;
+                downloadLink.style.display = 'none';
+            }
         }
     </script>
 </body>
